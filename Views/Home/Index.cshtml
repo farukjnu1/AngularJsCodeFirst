@@ -1,0 +1,270 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+<style>
+    .btn-space {
+        margin-left: -5%;
+        background-color: cornflowerblue;
+        font-size: large;
+    }
+</style>
+<script src="~/Scripts/angular.js"></script>
+<div ng-app="myApp">
+    <div ng-controller="myCtrl" ng-init="GetAllData()" class="divList">
+        <div ng-hide="View !== 'List'">
+            <div class="row">
+                <div class="col-md-11">
+                    <h2>List of Employee</h2>
+                </div>
+                <div class="col-md-1">
+                    <h2>
+                        <button class="btn btn-success" ng-click="SwitchView('Form');SaveType = 'Insert';Reset();"><i class="glyphicon-plus"></i></button>
+                    </h2>
+                </div>
+            </div>
+            <table cellpadding="12" class="table table-bordered table-hover">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Designation</th>
+                    <th>Age</th>
+                    <th>Join Date</th>
+                    <th>Gender</th>
+                    <th>Image</th>
+                    <th>Actions</th>
+                </tr>
+                <tr ng-repeat="emp in employees">
+                    <td>{{emp.Emp_Id}}</td>
+                    <td>{{emp.Emp_Name}}</td>
+                    <td>{{emp.Desi_Name}}</td>
+                    <td>{{emp.Emp_Age}}</td>
+                    <td>
+                        {{emp.Join_Date.substring(6, 19) | date : 'yyyy-MM-dd' }}
+                    </td>
+                    <td>{{emp.Gender}}</td>
+                    <td><img src="{{'/img/' +emp.PicPath}}" height="100px" /></td>
+                    <td>
+                        <button type="button" class="btn btn-primary" ng-click="EditEmp(emp)"><i class="glyphicon glyphicon-pencil"></i></button>
+                        <button type="button" class="btn btn-danger" ng-click="DeleteEmp(emp)"><i class="glyphicon glyphicon-trash"></i></button>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="form-horizontal" role="form" ng-hide="View !== 'Form'">
+            <div class="row">
+                <div class="col-md-12">
+                    <h2>Employee</h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6 col-lg-4">
+                    <div class="form-group">
+                        <label class="col-md-4 control-label">Name:</label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" id="inputEmail" placeholder="Name" ng-model="Employee.Emp_Name">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                    <div class="form-group">
+                        <label class="col-md-4 control-label">Designation:</label>
+                        <div class="col-md-8">
+                            <select class="form-control"
+                                    ng-model="Employee.Desi_Id"
+                                    ng-options="x.Desi_Id as x.Desi_Name for x in designations"
+                                    ng-required="true">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                    <div class="form-group">
+                        <label class="col-md-4 control-label">Age:</label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" placeholder="Age" ng-model="Employee.Emp_Age">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                    <div class="form-group">
+                        <label class="col-md-4 control-label">Join Date:</label>
+                        <div class="col-md-8">
+                            <input type="date" class="form-control" id="inputPassword" ng-model="Employee.Join_Date">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                    <div class="form-group">
+                        <label class="col-md-4 control-label">Gender:</label>
+                        <div class="col-md-8">
+                            <input type="radio" id="Male" name="gender" ng-model="Employee.Gender" value="Male" /> Male
+                            <input type="radio" id="Female" name="gender" ng-model="Employee.Gender" value="Female" /> Female
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                    <div class="form-group">
+                        <label class="col-md-4 control-label">Image:</label>
+                        <div class="col-md-8">
+                            <input type="file" id="imgFile" name="imgFile" ng-model="Employee.PicPath" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-10">
+                </div>
+                <div class="col-sm-2">
+                    <div class="form-group">
+                        <button type="button" id="btnSave" class="btn btn-success" value="Add New" ng-click="Save();" ng-hide="SaveType !== 'Insert'"><i class="glyphicon glyphicon-plus"></i> Add New</button>
+                        <button type="button" id="btnSave" class="btn btn-primary" value="Add New" ng-click="Save();" ng-hide="SaveType !== 'Update'"><i class="glyphicon glyphicon-pencil"></i> Update</button>
+                        <button class="btn btn-default" ng-click="SwitchView('List');">Go To List</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+
+</div>
+<script>
+    var app = angular.module("myApp", []);
+    app.controller("myCtrl", function ($scope, $http) {
+        $scope.View = 'List';
+        $scope.SwitchView = function (view) {
+            $scope.View = view;
+        };
+        $scope.SaveType = 'Insert';
+        $scope.Employee = {
+            Emp_Id: 0,
+            Emp_Name: '',
+            Desi_Id: 1,
+            Emp_Age: 0,
+            Join_Date: '',
+            Gender: 'Male',
+            PicPath: ''
+        };
+        $scope.Reset = function () {
+            $scope.Employee = {
+                Emp_Id: 0,
+                Emp_Name: '',
+                Desi_Id: 1,
+                Emp_Age: 0,
+                Join_Date: '',
+                Gender: 'Male',
+                PicPath: ''
+            };
+            $scope.SaveType = 'Insert';
+        };
+        $scope.ValidateForm = function (Employee) {
+            var isValid = true;
+            if (Employee.Desi_Id === null || Employee.Desi_Id === undefined || Employee.Desi_Id === 0) {
+                isValid = false;
+                alert('Designation is required.');
+            }
+            return isValid;
+        };
+        $scope.Save = function () {
+            if ($scope.ValidateForm($scope.Employee)) {
+
+                var files = document.getElementById('imgFile').files;
+                var file = files.length > 0 ? files[0] : null;
+                var oFormData = new FormData();
+                oFormData.append("pic", file);
+                oFormData.append("Emp_Id", $scope.Employee.Emp_Id);
+                oFormData.append("Emp_Name", $scope.Employee.Emp_Name);
+                oFormData.append("Emp_Age", $scope.Employee.Emp_Age);
+                oFormData.append("Desi_Id", $scope.Employee.Desi_Id);
+                oFormData.append("Join_Date", $scope.ConvertToDateStr($scope.Employee.Join_Date));
+                //oFormData.append("Join_Date", $scope.Employee.Join_Date);
+                oFormData.append("Gender", $scope.Employee.Gender);
+                $http.post('https://localhost:44318/Home/SaveEmp', oFormData,
+                    {
+                        transformRequest: angular.identity,
+                        headers: { 'Content-Type': undefined }
+                    }).then(function (response) {
+                        if (response.data.resstate === true) {
+                            $scope.SwitchView('List');
+                            $scope.GetAllData();
+                        } else {
+                            alert(response.data.message);
+                        }
+                    }, function (error) {
+                        console.log(error);
+                    });
+            }
+        };
+        $scope.GetAllData = function () {
+            $scope.GetEmployees();
+            $scope.GetDesignations();
+        };
+        $scope.GetEmployees = function () {
+            $http({
+                method: "get",
+                url: "https://localhost:44318/Home/Get_AllEmployee"
+            }).then(function (response) {
+                $scope.employees = response.data;
+            }, function (error) {
+                console.log(error);
+            });
+        };
+        $scope.DeleteEmp = function (emp) {
+            var isConfirm = confirm('Are you sure to delete?');
+            if (isConfirm) {
+                $http({
+                    method: "post",
+                    url: "https://localhost:44318/Home/DeleteEmp",
+                    datatype: "json",
+                    data: JSON.stringify({ id: emp.Emp_Id })
+                }).then(function (response) {
+                    alert(response.data);
+                    $scope.GetAllData();
+                }, function (error) {
+                    console.log(error);
+                });
+            }
+        };
+        $scope.EditEmp = function (emp) {
+            $scope.Employee.Emp_Id = emp.Emp_Id;
+            $scope.Employee.Emp_Name = emp.Emp_Name;
+            $scope.Employee.Desi_Id = emp.Desi_Id;
+            $scope.Employee.Emp_Age = emp.Emp_Age;
+            $scope.Employee.Gender = emp.Gender;
+            $scope.Employee.PicPath = emp.PicPath;
+            $scope.Employee.Join_Date = $scope.ConvertToDate(emp.Join_Date);
+            //$scope.Employee.Join_Date = emp.Join_Date;
+            $scope.SwitchView('Form');
+            $scope.SaveType = $scope.Employee.Emp_Id > 0 ? 'Update' : 'Insert';
+        };
+        $scope.ConvertToDate = function (strDate) {
+            var d = new Date();
+            var strTime = strDate.substring(6, 19);
+            var nTime = parseInt(strTime);
+            d = new Date(nTime);
+            return d;
+        };
+        $scope.ConvertToDateStr = function (date) {
+            const yyyy = date.getFullYear();
+            let mm = date.getMonth() + 1; // Months start at 0!
+            let dd = date.getDate();
+
+            if (dd < 10) dd = '0' + dd;
+            if (mm < 10) mm = '0' + mm;
+
+            const dateStr = yyyy + '-' + mm + '-' + dd;
+            return dateStr;
+        };
+        $scope.GetDesignations = function () {
+            $http({
+                method: "get",
+                url: "https://localhost:44318/Home/GetDesignations"
+            }).then(function (response) {
+                $scope.designations = response.data;
+            }, function (error) {
+                console.log(error);
+                alert("Error Occur");
+            });
+        };
+    })
+</script>
